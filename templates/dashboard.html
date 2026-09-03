@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h2>Բարի գալուստ, {{ request.user.phone_number }}</h2>
+    <p>Դուք հաջողությամբ մուտք եք գործել համակարգ միայն հեռախոսահամարով։</p>
+    <a href="{% url 'logout' %}">Դուրս գալ հաշվից</a>
+</body>
+</html>

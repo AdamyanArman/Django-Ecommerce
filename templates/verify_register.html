@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h2>Հաստատեք Գրանցումը</h2>
+    <p>Մենք ուղարկել ենք 6-նիշանոց հաստատման կոդ ձեր Telegram-ին։</p>
+    {% if error %}<p style="color: red;">{{ error }}</p>{% endif %}
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="otp" placeholder="Մուտքագրեք 6-նիշանոց կոդը" required><br><br>
+        <button type="submit">Հաստատել Հաշիվը</button>
+</form>
+</body>
+</html>

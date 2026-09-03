@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        .product_container{
+            width: 100px;
+            height: 180px;
+            border: 2px solid green;
+        }
+        .prod_image{
+            width: 30px;
+            height: 30px;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    {% for cat in category %}
+
+        <p>{{ cat.name_hy }}</p>
+
+    {% endfor %}
+
+
+</body>
+</html>
