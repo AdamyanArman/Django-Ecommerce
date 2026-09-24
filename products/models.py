@@ -1,29 +1,23 @@
 import uuid
 from django.db import models
 
-
-class Attribute(models.Model):
+class Brand(models.Model):
     name_hy = models.CharField(max_length=50)
     name_en = models.CharField(max_length=50)
     name_ru = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.name_hy
+        return f'{self.name_hy}'
 
 
-class AttributeValue(models.Model):
-    attribute = models.ForeignKey(
-        Attribute, on_delete=models.CASCADE, related_name="values"
-    )
+class Type(models.Model):
     value_hy = models.CharField(max_length=50)
     value_en = models.CharField(max_length=50)
     value_ru = models.CharField(max_length=50)
 
-    def __str__(self):
-        # Fallback to prevent crashes if attribute isn't loaded yet
-        attr_name = self.attribute.name_hy if hasattr(self, 'attribute') else ''
-        return f"{attr_name}: {self.value_hy}"
 
+    def __str__(self):
+        return f'{self.value_hy}'
 
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -36,11 +30,8 @@ class Product(models.Model):
     )
     is_available = models.BooleanField(default=False)
 
-    attribute_values = models.ManyToManyField(
-        AttributeValue,
-        through="ProductAttributeValue",
-        related_name="products",
-    )
+    brand=models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
+    type=models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -49,14 +40,6 @@ class Product(models.Model):
         # FIXED: Safe retrieval without crashing on missing translations
         translation = self.translations.filter(language="hy").first()
         return translation.name if translation else f"Product {self.article}"
-
-
-class ProductAttributeValue(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ("product", "attribute_value")
 
 
 class ProductTranslations(models.Model):

@@ -20,6 +20,14 @@
 </head>
 <body>
 
+    {% if request.session.customer_phone %}
+        <p>Բարի գալուստ, {{ request.session.customer_phone }}</p>
+        <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a>
+    {% endif %}
+
+
     {% for cat in category %}
 
         <p>{{ cat.name_hy }}</p>
