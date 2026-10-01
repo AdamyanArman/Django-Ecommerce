@@ -1,39 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hy">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Supermarket</title>
 
     <style>
-        .product_container{
-            width: 100px;
-            height: 180px;
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .product_container {
+            width: 200px;
+            min-height: 280px;
             border: 2px solid green;
-        }
-        .prod_image{
-            width: 30px;
-            height: 30px;
+            padding: 10px;
         }
 
+        .prod_image {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+        }
 
+        .product_name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .price {
+            font-size: 18px;
+            color: green;
+        }
+
+        .add_button {
+            padding: 8px 15px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
 
-    {% if request.session.customer_phone %}
-        <p>Բարի գալուստ, {{ request.session.customer_phone }}</p>
-        <a href="{% url 'logout' %}">Logout</a>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a>
-    {% endif %}
+{% if customer.is_authenticated %}
+    <p>Բարի գալուստ, {{ customer.phone }}</p>
 
+    <a href="{% url 'logout' %}">Logout</a>
+{% endif %}
 
-    {% for cat in category %}
+<a href="{% url 'cart' %}">
+    🛒 Զամբյուղ
+</a>
 
-        <p>{{ cat.name_hy }}</p>
+<h1>Ապրանքներ</h1>
+
+<div class="products">
+
+    {% for product in products %}
+
+    <div class="product_container" id="{{ product.id }}">
+
+        {% if product.image %}
+            <img
+                src="{{ product.image.url }}"
+                class="prod_image"
+            >
+        {% endif %}
+
+        <h3>{{ product }}</h3>
+
+        <p>{{ product.price }} ֏</p>
+
+        <form
+            method="POST"
+            action="{% url 'add_to_cart' product.id %}"
+        >
+            {% csrf_token %}
+
+            <button type="submit">
+                🛒 Add to cart
+            </button>
+        </form>
+
+    </div>
 
     {% endfor %}
 
+</div>
 
 </body>
 </html>

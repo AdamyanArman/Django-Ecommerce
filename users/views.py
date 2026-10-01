@@ -1,10 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.utils import timezone
-from .models import User
-
-
-# Create your views here.
+from django.contrib.auth import authenticate, login, logout
+from .models import Customer
 
 
 def register_view(request):
@@ -26,26 +23,22 @@ def register_view(request):
             messages.error(request, "Գաղտնաբառերը չեն համընկնում")
             return render(request, "register.html")
 
-        if User.objects.filter(phone=phone).exists():
+        if Customer.objects.filter(phone=phone).exists():
             messages.error(request, "Այս հեռախոսահամարով արդեն գրանցված են")
             return render(request, "register.html")
 
-        # Ստեղծում ենք հաճախորդին
-        customer = User(
+        # Ստեղծում ենք հաճախորդին create_user-ի միջոցով (որպեսզի գաղտնաբառը հեշավորվի)
+        customer = Customer.objects.create_user(
             phone=phone,
+            username=phone,  # Օգտագործում ենք հեռախոսահամարը որպես username
+            password=password
         )
-        customer.set_password(password)  # գաղտնաբառը hash ենք անում
-        #customer.last_login = timezone.now()
-        #customer.save(update_fields=["last_login"])
-        request.session["customer_id"] = customer.id
-        request.session["customer_phone"] = customer.phone
 
-        messages.success(request, f"Բարի գալուստ, {customer.full_name or customer.phone}։")
-        customer.save()
+        # Ավտոմատ մուտք ենք գործում գրանցվելուց հետո
+        login(request, customer)
 
-        messages.success(request, "Գրանցումը հաջողվեց։ Կարող եք մուտք գործել։")
-        return redirect("main")  # փոխիր քո գլխավոր էջի անունով
-        return redirect("users:login")
+        messages.success(request, f"Բարի գալուստ, {customer.full_name or customer.phone}։ Գրանցումը հաջողվեց։")
+        return redirect("main")  # Փոխիր քո գլխավոր էջի անունով
 
     return render(request, "register.html")
 
@@ -55,40 +48,27 @@ def login_view(request):
         phone = request.POST.get("phone", "").strip()
         password = request.POST.get("password", "")
 
-        print('customer_phone: '+phone)
-        print('customer_password: '+password )
-
         if not phone or not password:
             messages.error(request, "Լրացրեք բոլոր դաշտերը")
             return render(request, "login.html")
 
-        try:
-            customer = User.objects.get(phone=phone)
-            print('successful login!')
-            if customer.check_password(password) and customer.is_active:
-                # Մուտքը հաջողվեց
-                #customer.last_login = timezone.now()
-                #customer.save(update_fields=["last_login"])
+        # Authenticate-ը ստուգում է տվյալները (քանի որ USERNAME_FIELD-ը phone է)
+        customer = authenticate(request, phone=phone, password=password)
 
-                # Session-ում պահում ենք տվյալները
-                request.session["customer_id"] = customer.id
-                request.session["customer_phone"] = customer.phone
-
-                print("it reeacheee!")
-
-                messages.success(request, f"Բարի գալուստ, {customer.full_name or customer.phone}։")
-                #return redirect("main")  # փոխիր քո գլխավոր էջի անունով
-                return render(request, 'main.html')
+        if customer is not None:
+            if customer.is_active:
+                login(request, customer)
+                messages.success(request, f"Բարի վերադարձ, {customer.full_name or customer.phone}։")
+                return redirect("main")
             else:
-                messages.error(request, "Սխալ գաղտնաբառ կամ հաշիվը ակտիվ չէ")
-
-        except User.DoesNotExist:
-            messages.error(request, "Այս հեռախոսահամարով հաճախորդ չի գտնվել")
+                messages.error(request, "Հաշիվը ակտիվ չէ")
+        else:
+            messages.error(request, "Սխալ հեռախոսահամար կամ գաղտնաբառ")
 
     return render(request, "login.html")
 
 
 def logout_view(request):
-    request.session.flush()  # մաքրում ենք ամբողջ session-ը
+    logout(request)  # Մաքրում է Django-ի հավաստագրման session-ը
     messages.success(request, "Դուք դուրս եկաք համակարգից")
     return redirect("login")

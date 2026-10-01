@@ -2,13 +2,13 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class User(AbstractUser):
+class Customer(AbstractUser):
     # Add / override fields here
     phone = models.CharField(
         max_length=20,
         unique=True,
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
     )
 
     # Optional: if you want phone to be used for login instead of username

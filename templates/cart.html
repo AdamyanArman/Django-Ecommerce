@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Զամբյուղ</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        .cart {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity button {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .total {
+            text-align: right;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+
+        .checkout {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="cart">
+
+    <h1>🛒 Իմ զամբյուղը</h1>
+
+    {% if cart.items.all %}
+
+        {% for item in cart.items.all %}
+
+            <div class="cart-item">
+
+                {% if item.product.image %}
+                    <img
+                        src="{{ item.product.image.url }}"
+                        class="product-image"
+                        alt="{{ item.product }}"
+                    >
+                {% endif %}
+
+                <div class="product-info">
+
+                    <div class="product-name">
+                        {{ item.product }}
+                    </div>
+
+                    <p>
+                        Գին՝ {{ item.product.price }} ֏
+                    </p>
+
+                    <p>
+                        Ընդհանուր՝ {{ item.total_price }} ֏
+                    </p>
+
+                </div>
+
+                <div class="quantity">
+
+                    <button>-</button>
+
+                    <span>{{ item.quantity }}</span>
+
+                    <button>+</button>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+        <div class="total">
+            Ընդհանուր՝ {{ cart.total_price }} ֏
+        </div>
+
+        <button class="checkout">
+            Պատվիրել
+        </button>
+
+    {% else %}
+
+        <p>Ձեր զամբյուղը դատարկ է։</p>
+
+        <a href="{% url 'main' %}">
+            Վերադառնալ ապրանքներին
+        </a>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+
