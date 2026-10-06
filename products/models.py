@@ -1,5 +1,8 @@
 import uuid
 from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+
 
 class Brand(models.Model):
     name_hy = models.CharField(max_length=50)
@@ -29,6 +32,22 @@ class Product(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True
     )
     is_available = models.BooleanField(default=False)
+
+    first_step = models.DecimalField(
+        "Առաջին քայլ", max_digits=6, decimal_places=2, default=Decimal("1.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Զամբյուղ ավելացնելիս սկզբնական քանակը (նաև նվազագույնը)",
+    )
+    next_step = models.DecimalField(
+        "Հաջորդ քայլ", max_digits=6, decimal_places=2, default=Decimal("1.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="+ / − սեղմելիս փոփոխության քայլը",
+    )
+    max_quantity = models.DecimalField(
+        "Առավելագույն քանակ", max_digits=8, decimal_places=1, default=Decimal("100.0"),
+        validators=[MinValueValidator(Decimal("0.1"))],
+        help_text="Զամբյուղում այս քանակից ավել չի կարելի ավելացնել",
+    )
 
     brand=models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
     type=models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)

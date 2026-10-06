@@ -75,22 +75,18 @@
 
         <p>{{ product.price }} ֏</p>
 
-        <form
-            method="POST"
-            action="{% url 'add_to_cart' product.id %}"
-        >
-            {% csrf_token %}
 
-            <button type="submit">
-                🛒 Add to cart
+            <button type="button" class="add_button" data-product-id="{{ product.id }}">
+                🛒 Ավելացնել զամբյուղ
             </button>
-        </form>
 
     </div>
 
     {% endfor %}
 
 </div>
+
+
 
 </body>
 </html>
