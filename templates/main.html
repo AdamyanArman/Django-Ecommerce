@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html lang="hy">
+
 <head>
     <meta charset="UTF-8">
+
     <title>Supermarket</title>
 
     <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
         .products {
             display: flex;
             flex-wrap: wrap;
@@ -16,6 +28,7 @@
             min-height: 280px;
             border: 2px solid green;
             padding: 10px;
+            border-radius: 8px;
         }
 
         .prod_image {
@@ -34,53 +47,147 @@
             color: green;
         }
 
+
+        /* =========================
+           ADD BUTTON
+        ========================= */
+
         .add_button {
-            padding: 8px 15px;
+            width: 100%;
+            padding: 10px 15px;
+
             background: green;
             color: white;
+
             border: none;
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+        }
+
+        .add_button:hover {
+            background: darkgreen;
+        }
+
+
+        /* =========================
+           CART CONTROL
+        ========================= */
+
+        .cart_control {
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 10px;
+        }
+
+        .cart_control button {
+            width: 38px;
+            height: 38px;
+
+            border: none;
+            border-radius: 5px;
+
+            background: green;
+            color: white;
+
+            font-size: 22px;
+
             cursor: pointer;
         }
+
+        .cart_control button:hover {
+            background: darkgreen;
+        }
+
+        .cart_count {
+            min-width: 30px;
+
+            text-align: center;
+
+            font-size: 18px;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 
+
 <body>
 
-{% if customer.is_authenticated %}
-    <p>Բարի գալուստ, {{ customer.phone }}</p>
 
-    <a href="{% url 'logout' %}">Logout</a>
+{% if customer.is_authenticated %}
+
+    <p>
+        Բարի գալուստ, {{ customer.phone }}
+    </p>
+
+    <a href="{% url 'logout' %}">
+        Logout
+    </a>
+
 {% endif %}
 
-<a href="{% url 'cart' %}">
-    🛒 Զամբյուղ
-</a>
 
 <h1>Ապրանքներ</h1>
+
 
 <div class="products">
 
     {% for product in products %}
 
-    <div class="product_container" id="{{ product.id }}">
+        <div
+            class="product_container"
+            id="product-{{ product.id }}"
+        >
 
-        {% if product.image %}
-            <img
-                src="{{ product.image.url }}"
-                class="prod_image"
+            {% if product.image %}
+
+                <img
+                    src="{{ product.image.url }}"
+                    class="prod_image"
+                    alt="{{ product }}"
+                >
+
+            {% endif %}
+
+
+            <h3 class="product_name">
+                {{ product }}
+            </h3>
+
+
+            <p class="price">
+                {{ product.price }} ֏
+            </p>
+
+
+            <!--
+                IMPORTANT:
+                Django generates the correct URL.
+            -->
+
+            <button
+                type="button"
+                class="add_button"
+
+                data-product-id="{{ product.id }}"
+
+                data-add-url="{% url 'add-to-cart' product.id %}"
+
+                data-minus-url="{% url 'minus-from-cart' product.id %}"
+
+                data-count-url="{% url 'check-product-count' product.id %}"
             >
-        {% endif %}
-
-        <h3>{{ product }}</h3>
-
-        <p>{{ product.price }} ֏</p>
-
-
-            <button type="button" class="add_button" data-product-id="{{ product.id }}">
                 🛒 Ավելացնել զամբյուղ
             </button>
 
-    </div>
+        </div>
 
     {% endfor %}
 
@@ -88,5 +195,621 @@
 
 
 
+<script>
+
+
+// =====================================================
+// CSRF
+// =====================================================
+
+function getCookie(name) {
+
+    let cookieValue = null;
+
+    if (document.cookie && document.cookie !== '') {
+
+        const cookies = document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+
+            const cookie = cookies[i].trim();
+
+            if (
+                cookie.substring(0, name.length + 1)
+                ===
+                name + '='
+            ) {
+
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
+
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+
+
+const csrftoken = getCookie("csrftoken");
+
+
+
+// =====================================================
+// ADD PRODUCT
+// =====================================================
+
+function addProduct(button) {
+
+    const productId =
+        button.dataset.productId;
+
+    const addUrl =
+        button.dataset.addUrl;
+
+
+    fetch(addUrl, {
+
+        method: "POST",
+
+        headers: {
+            "X-CSRFToken": csrftoken
+        }
+
+    })
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        console.log(
+            "ADD:",
+            productId,
+            data
+        );
+
+
+        if (data.success) {
+
+            showCartControl(
+                button,
+                data.quantity
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "ADD ERROR:",
+            error
+        );
+
+    });
+
+}
+
+
+
+// =====================================================
+// PLUS
+// =====================================================
+
+function plusProduct(cartControl) {
+
+    const productId =
+        cartControl.dataset.productId;
+
+
+    const addUrl =
+        cartControl.dataset.addUrl;
+
+
+    fetch(addUrl, {
+
+        method: "POST",
+
+        headers: {
+            "X-CSRFToken": csrftoken
+        }
+
+    })
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        console.log(
+            "PLUS:",
+            productId,
+            data
+        );
+
+
+        if (data.success) {
+
+            updateCount(
+                cartControl,
+                data.quantity
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "PLUS ERROR:",
+            error
+        );
+
+    });
+
+}
+
+
+
+// =====================================================
+// MINUS
+// =====================================================
+
+function minusProduct(cartControl) {
+
+    const productId =
+        cartControl.dataset.productId;
+
+
+    const minusUrl =
+        cartControl.dataset.minusUrl;
+
+
+    fetch(minusUrl, {
+
+        method: "POST",
+
+        headers: {
+            "X-CSRFToken": csrftoken
+        }
+
+    })
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        console.log(
+            "MINUS:",
+            productId,
+            data
+        );
+
+
+        if (data.success) {
+
+            if (data.quantity <= 0) {
+
+                showAddButton(
+                    cartControl
+                );
+
+            } else {
+
+                updateCount(
+                    cartControl,
+                    data.quantity
+                );
+
+            }
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "MINUS ERROR:",
+            error
+        );
+
+    });
+
+}
+
+
+
+// =====================================================
+// CHECK CART COUNT
+// =====================================================
+
+function checkProductInCart(button) {
+
+    const productId =
+        button.dataset.productId;
+
+    const countUrl =
+        button.dataset.countUrl;
+
+
+    console.log(
+        "CHECK CART:",
+        productId,
+        countUrl
+    );
+
+
+    fetch(countUrl, {
+
+        method: "GET",
+
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+
+    })
+
+    .then(response => {
+
+        console.log(
+            "COUNT RESPONSE:",
+            productId,
+            response.status
+        );
+
+
+        // Product does not exist in cart
+
+        if (response.status === 404) {
+
+            return {
+                count: 0
+            };
+
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        console.log(
+            "COUNT:",
+            productId,
+            data.count
+        );
+
+
+        if (data.count > 0) {
+
+            showCartControl(
+                button,
+                data.count
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "CHECK CART ERROR:",
+            productId,
+            error
+        );
+
+    });
+
+}
+
+
+
+// =====================================================
+// SHOW CART CONTROL
+// =====================================================
+
+function showCartControl(
+    element,
+    quantity
+) {
+
+    const productId =
+        element.dataset.productId;
+
+    const addUrl =
+        element.dataset.addUrl;
+
+    const minusUrl =
+        element.dataset.minusUrl;
+
+
+    const cartControl =
+        document.createElement("div");
+
+
+    cartControl.className =
+        "cart_control";
+
+
+    cartControl.dataset.productId =
+        productId;
+
+    cartControl.dataset.addUrl =
+        addUrl;
+
+    cartControl.dataset.minusUrl =
+        minusUrl;
+
+
+    cartControl.innerHTML = `
+
+        <button
+            type="button"
+            class="minus_button"
+        >
+            −
+        </button>
+
+
+        <span class="cart_count">
+            ${quantity}
+        </span>
+
+
+        <button
+            type="button"
+            class="plus_button"
+        >
+            +
+        </button>
+
+    `;
+
+
+    element.replaceWith(
+        cartControl
+    );
+
+
+    setupCartButtons(
+        cartControl
+    );
+
+}
+
+
+
+// =====================================================
+// SHOW ADD BUTTON
+// =====================================================
+
+function showAddButton(
+    cartControl
+) {
+
+    const productId =
+        cartControl.dataset.productId;
+
+    const addUrl =
+        cartControl.dataset.addUrl;
+
+    const minusUrl =
+        cartControl.dataset.minusUrl;
+
+
+    const countUrl =
+        document
+            .querySelector(
+                `.add_button[data-product-id="${productId}"]`
+            );
+
+
+    const button =
+        document.createElement("button");
+
+
+    button.type = "button";
+
+    button.className =
+        "add_button";
+
+
+    button.dataset.productId =
+        productId;
+
+    button.dataset.addUrl =
+        addUrl;
+
+    button.dataset.minusUrl =
+        minusUrl;
+
+
+    /*
+     * Get count URL from current page URL structure.
+     * We save it before replacing the element.
+     */
+
+    button.dataset.countUrl =
+        `/product_count_in_cart/${productId}/`;
+
+
+    button.innerHTML =
+        "🛒 Ավելացնել զամբյուղ";
+
+
+    cartControl.replaceWith(
+        button
+    );
+
+
+    setupAddButton(
+        button
+    );
+
+}
+
+
+
+// =====================================================
+// UPDATE COUNT
+// =====================================================
+
+function updateCount(
+    cartControl,
+    quantity
+) {
+
+    const count =
+        cartControl.querySelector(
+            ".cart_count"
+        );
+
+
+    if (count) {
+
+        count.textContent =
+            quantity;
+
+    }
+
+}
+
+
+
+// =====================================================
+// SETUP ADD BUTTON
+// =====================================================
+
+function setupAddButton(button) {
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            addProduct(
+                this
+            );
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// SETUP - / +
+// =====================================================
+
+function setupCartButtons(
+    cartControl
+) {
+
+    const minusButton =
+        cartControl.querySelector(
+            ".minus_button"
+        );
+
+
+    const plusButton =
+        cartControl.querySelector(
+            ".plus_button"
+        );
+
+
+    minusButton.addEventListener(
+        "click",
+        function () {
+
+            minusProduct(
+                cartControl
+            );
+
+        }
+    );
+
+
+    plusButton.addEventListener(
+        "click",
+        function () {
+
+            plusProduct(
+                cartControl
+            );
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// INITIALIZE
+// =====================================================
+
+document
+    .querySelectorAll(".add_button")
+    .forEach(button => {
+
+        // Setup normal Add button
+        setupAddButton(button);
+
+        // Check database cart
+        checkProductInCart(button);
+
+    });
+
+
+</script>
+
+
 </body>
+
 </html>

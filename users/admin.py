@@ -36,7 +36,7 @@ from .models import Customer
 
 
 @admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
+class CustomerAdmin(BaseUserAdmin):
   # Ցանկում երևացող սյունակները
   list_display = ("phone", "first_name", "last_name", "is_staff", "is_active")
   list_filter = ("is_staff", "is_superuser", "is_active", "groups")
@@ -44,7 +44,7 @@ class CustomerAdmin(admin.ModelAdmin):
 
   # Խմբագրման էկրանի դաշտերը (Fieldsets)
   fieldsets = (
-      (None, {"fields": ("phone",)}),
+      (None, {"fields": ("phone", "password",)}),
       ("Անձնական տվյալներ", {"fields": ("first_name", "last_name")}),
       (
           "Իրավունքներ և կարգավիճակ",

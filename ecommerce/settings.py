@@ -148,4 +148,4 @@ MEDIA_URL='/media/'
 
 AUTH_USER_MODEL = 'users.Customer'
 
-LOGIN_REDIRECT_URL='users/login'
+LOGIN_URL = '/users/login/'
