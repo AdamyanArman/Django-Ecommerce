@@ -99,3 +99,33 @@ def product_in_cart_count(request, product_id):
 
 
 
+
+@login_required
+def cart(request):
+    cart, _ = Cart.objects.get_or_create(
+        customer=request.user
+    )
+
+    items = cart.items.select_related('product').all()
+    total_price = Decimal('0.00')
+
+    for item in items:
+        if item.product:
+            item.item_subtotal = (
+                item.product.price * item.quantity
+            )
+            total_price += item.item_subtotal
+        else:
+            item.item_subtotal = Decimal('0.00')
+
+    context = {
+        'cart': cart,
+        'items': items,
+        'total_price': total_price,
+    }
+
+    return render(request, 'cart.html', context)
+
+
+
+

@@ -1,118 +1,265 @@
-{% load static %}
 
 <!DOCTYPE html>
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Զամբյուղ</title>
+    <title>Իմ զամբյուղը | Supermarket</title>
 
     <style>
-        /* քո style-ները նույնը թող */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+            background: #f5f7f5;
+            color: #222;
+            padding: 30px 16px;
         }
-        .cart {
-            max-width: 800px;
-            margin: auto;
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
         }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #16803c;
+            font-weight: bold;
+        }
+
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .cart-items,
+        .summary {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+        }
+
         .cart-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
         }
-        .product-image {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
+
+        .cart-item:first-child {
+            padding-top: 0;
         }
+
+        .cart-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
         .product-info {
             flex: 1;
+            min-width: 0;
         }
+
         .product-name {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
+            margin-bottom: 10px;
+            overflow-wrap: anywhere;
         }
-        .quantity {
+
+        .product-detail {
+            color: #777;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .subtotal {
+            font-weight: bold;
+            color: #16803c;
+            white-space: nowrap;
+        }
+
+        .summary h2 {
+            font-size: 21px;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            color: #555;
         }
-        .qty-btn {
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-        }
-        .total {
-            text-align: right;
-            font-size: 22px;
-            font-weight: bold;
-            margin-top: 30px;
-        }
-        .checkout {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin-top: 20px;
-            background: green;
-            color: white;
-            border: none;
-            border-radius: 6px;
+
+        .summary-total {
+            border-top: 1px solid #eee;
+            padding-top: 18px;
+            margin-top: 18px;
             font-size: 18px;
-            cursor: pointer;
+            font-weight: bold;
+            color: #16803c;
+        }
+
+        .currency {
+            white-space: nowrap;
+        }
+
+        .empty-cart {
+            background: white;
+            border-radius: 14px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-cart h2 {
+            margin-bottom: 12px;
+        }
+
+        .empty-cart p {
+            color: #777;
+            margin-bottom: 22px;
+        }
+
+        .shop-button {
+            display: inline-block;
+            background: #16803c;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+            .cart-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-items,
+            .summary {
+                padding: 17px;
+            }
+
+            .cart-item {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .subtotal {
+                margin-left: auto;
+            }
         }
     </style>
 </head>
 
 <body>
+<div class="container">
 
-<div class="cart">
+    <div class="header">
+        <h1>🛒 Իմ զամբյուղը</h1>
+        <a href="{% url 'main' %}" class="back-link">
+            ← Շարունակել գնումները
+        </a>
+    </div>
 
-    <h1>🛒 Իմ զամբյուղը</h1>
+    {% if items %}
+        <div class="cart-layout">
 
-    {% if cart.items.all %}
+            <div class="cart-items">
+                {% for item in items %}
+                    {% if item.product %}
+                        <div class="cart-item">
 
-        {% for item in cart.items.all %}
-            <div class="cart-item">
+                            <div class="product-info">
+                                <div class="product-name">
+                                    {{ item.product }}
+                                </div>
 
-                {% if item.product.image %}
-                    <img src="{{ item.product.image.url }}" class="product-image" alt="{{ item.product }}">
-                {% endif %}
+                                <div class="product-detail">
+                                    Մեկ միավորի գինը՝
+                                    <span class="currency">
+                                        {{ item.product.price|floatformat:2 }} ֏
+                                    </span>
+                                </div>
 
-                <div class="product-info">
-                    <div class="product-name">{{ item.product }}</div>
-                    <p>Գին՝ {{ item.product.price }} ֏</p>
-                    <p>Ընդհանուր՝ <span class="item-total">{{ item.total_price }}</span> ֏</p>
-                </div>
+                                <div class="product-detail">
+                                    Քանակ՝ {{ item.quantity }}
+                                </div>
+                            </div>
 
-                <div class="qty-controls quantity" data-product-id="{{ item.product.id }}">
-                    <button type="button" class="qty-btn minus">−</button>
-                    <span class="qty-number">{{ item.quantity }}</span>
-                    <button type="button" class="qty-btn plus">+</button>
-                </div>
+                            <div class="subtotal">
+                                {{ item.item_subtotal|floatformat:2 }} ֏
+                            </div>
 
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
-        {% endfor %}
 
-        <div class="total cart-total">
-            Ընդհանուր՝ {{ cart.total_price }} ֏
+            <aside class="summary">
+                <h2>Պատվերի ամփոփում</h2>
+
+                <div class="summary-row">
+                    <span>Ապրանքների քանակը</span>
+                    <span>{{ cart.items_count }}</span>
+                </div>
+
+                <div class="summary-row summary-total">
+                    <span>Ընդհանուր</span>
+                    <span class="currency">
+                        {{ total_price|floatformat:2 }} ֏
+                    </span>
+                </div>
+
+                <p style="color: #777; font-size: 13px; margin-top: 15px;">
+                    Առաքման արժեքը, եթե կիրառելի է, հաշվարկվում է առանձին։
+                </p>
+            </aside>
+
         </div>
 
-        <button class="checkout">Պատվիրել</button>
-
     {% else %}
-        <p>Ձեր զամբյուղը դատարկ է։</p>
-        <a href="{% url 'main' %}">Վերադառնալ ապրանքներին</a>
+        <div class="empty-cart">
+            <h2>Ձեր զամբյուղը դատարկ է</h2>
+            <p>Ավելացրեք ապրանքներ և վերադարձեք այստեղ։</p>
+
+            <a href="{% url 'main' %}" class="shop-button">
+                Գնալ գնումների
+            </a>
+        </div>
     {% endif %}
 
 </div>
-
-<script src="{% static 'js/cart.js' %}"></script>
-
 </body>
 </html>
+```
