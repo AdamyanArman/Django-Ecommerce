@@ -12,8 +12,8 @@ class Customer(AbstractUser):
     )
 
     # Optional: if you want phone to be used for login instead of username
-    USERNAME_FIELD = "phone"
-    REQUIRED_FIELDS = ["username"]  # username still required when creating superuser
+    #USERNAME_FIELD = "phone"
+    #REQUIRED_FIELDS = ["username"]  # username still required when creating superuser
 
     class Meta:
         verbose_name = "Հաճախորդ"

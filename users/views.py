@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .models import Customer
+from django.views.decorators.http import require_http_methods
 
 
 def register_view(request):
@@ -53,7 +54,7 @@ def login_view(request):
             return render(request, "login.html")
 
         # Authenticate-ը ստուգում է տվյալները (քանի որ USERNAME_FIELD-ը phone է)
-        customer = authenticate(request, phone=phone, password=password)
+        customer = authenticate(request, username=phone, password=password)
 
         if customer is not None:
             if customer.is_active:
@@ -68,6 +69,7 @@ def login_view(request):
     return render(request, "login.html")
 
 
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
     logout(request)  # Մաքրում է Django-ի հավաստագրման session-ը
     messages.success(request, "Դուք դուրս եկաք համակարգից")

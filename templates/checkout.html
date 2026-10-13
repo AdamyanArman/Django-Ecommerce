@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Պատվերի ձևակերպում | Supermarket</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7f5;
+            color: #222;
+            padding: 30px 16px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #16803c;
+            font-weight: bold;
+        }
+
+        .checkout-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .form-section,
+        .summary {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-section h2, .summary h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #16803c;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #444;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #16803c;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .summary-item-name {
+            font-weight: 600;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #555;
+        }
+
+        .summary-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #16803c;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #16803c;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .submit-btn:hover {
+            background: #12632e;
+        }
+
+        .currency {
+            white-space: nowrap;
+        }
+
+        .error-messages {
+            background: #ffe6e6;
+            color: #d93025;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>📦 Պատվերի ձևակերպում</h1>
+        <a href="{% url 'cart' %}" class="back-link">
+            ← Վերադառնալ զամբյուղ
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="error-messages">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'checkout' %}">
+        {% csrf_token %}
+
+        <div class="checkout-layout">
+
+            <!-- Ձախ կողմ՝ Առաքման և վճարման տվյալներ -->
+            <div class="form-section">
+                <h2>1. Առաքման տվյալներ</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Անուն *</label>
+                        <input type="text" id="name" name="name" value="{{ request.user.first_name }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="surname">Ազգանուն *</label>
+                        <input type="text" id="surname" name="surname" value="{{ request.user.last_name }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Հեռախոսահամար *</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+374 XX XXXXXX" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Առաքման հասցե *</label>
+                    <input type="text" id="location" name="location" placeholder="Քաղաք, փողոց, շենք, բնակարան" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">Մեկնաբանություն (կամընտիր)</label>
+                    <textarea id="comment" name="comment" rows="3" placeholder="Լրացուցիչ նշումներ առաքչի համար..."></textarea>
+                </div>
+
+                <h2 style="margin-top: 30px;">2. Վճարման եղանակ</h2>
+
+                <div class="form-group">
+                    <label for="payment_method">Ընտրեք վճարման տարբերակը *</label>
+                    <select id="payment_method" name="payment_method" required>
+                        <option value="cash">Կանխիկ</option>
+                        <option value="pos">POS տերմինալ (քարտով տեղում)</option>
+                        <option value="idram">Idram</option>
+                        <option value="ameria_online">Ameria Bank online</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Ուղղանկյուն աջ կողմում՝ Պատվերի ամփոփում -->
+            <aside class="summary">
+                <h2>Պատվերի ամփոփում</h2>
+
+                <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                    {% for item in items %}
+                        {% if item.product %}
+                            <div class="summary-item">
+                                <span class="summary-item-name">{{ item.product.name }} x {{ item.quantity }}</span>
+                                <span>{{ item.subtotal|floatformat:2 }} ֏</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="summary-row">
+                    <span>Ապրանքների քանակը</span>
+                    <span>{{ cart.items_count }}</span>
+                </div>
+
+                <div class="summary-row summary-total">
+                    <span>Ընդհանուր վճարման</span>
+                    <span class="currency">
+                        {{ cart.total_price|floatformat:2 }} ֏
+                    </span>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    Հաստատել պատվերը
+                </button>
+            </aside>
+
+        </div>
+    </form>
+
+</div>
+
+</body>
+</html>

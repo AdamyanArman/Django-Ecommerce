@@ -127,9 +127,12 @@
         Բարի գալուստ, {{ customer.phone }}
     </p>
 
-    <a href="{% url 'logout' %}">
-        Logout
-    </a>
+    <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" style="background: none; border: none; color: red; cursor: pointer; font-weight: bold;">
+            Դուրս գալ
+        </button>
+    </form>
 
 {% endif %}
 

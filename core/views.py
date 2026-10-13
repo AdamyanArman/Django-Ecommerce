@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from products.models import Product, ProductTranslations
 from users.models import Customer
 from products.models import Product
-from orders.models import Cart, CartItem
+from orders.models import Cart, CartItem, Order, OrderItem
 from decimal import Decimal
+from django.contrib import messages
+from django.db import transaction
 
 
 @login_required
@@ -127,5 +129,68 @@ def cart(request):
     return render(request, 'cart.html', context)
 
 
+@login_required
+def checkout_view(request):
+    # Ստանում ենք օգտատիրոջ զամբյուղը
+    try:
+        cart = Cart.objects.get(customer=request.user)
+    except Cart.DoesNotExist:
+        messages.error(request, "Զամբյուղը գոյություն չունի:")
+        return redirect('main')
 
+    items = cart.items.filter(product__isnull=False)
+
+    # Եթե զամբյուղը դատարկ է
+    if not items.exists():
+        messages.warning(request, "Ձեր զամբյուղը դատարկ է:")
+        return redirect('cart')
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        surname = request.POST.get('surname')
+        location = request.POST.get('location')
+        phone = request.POST.get('phone')
+        comment = request.POST.get('comment', '')
+        payment_method = request.POST.get('payment_method')
+
+        if not all([name, surname, location, phone, payment_method]):
+            messages.error(request, "Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը:")
+            return render(request, 'checkout.html', {'cart': cart, 'items': items})
+
+        # Տրանզակցիայով ստեղծում ենք Order-ը և OrderItem-ները, ապա մաքրում Cart-ը
+        try:
+            with transaction.atomic():
+                order = Order.objects.create(
+                    customer=request.user,
+                    name=name,
+                    surname=surname,
+                    location=location,
+                    phone=phone,
+                    comment=comment,
+                    payment_method=payment_method,
+                    status=Order.Status.NEW,
+                )
+
+                for item in items:
+                    current_price = item.product.price if item.product else Decimal('0.00')
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        price=current_price,
+                        quantity=item.quantity
+                    )
+
+                # Մաքրում ենք զամբյուղի ապրանքները
+                cart.items.all().delete()
+
+                messages.success(request, f"Պատվեր #{order.id}-ը հաջողությամբ ձևակերպվեց:")
+                return redirect('main')
+
+        except Exception as e:
+            messages.error(request, f"Պատվերը ձևակերպելիս տեղի ունեցավ սխալ: {str(e)}")
+
+    return render(request, 'checkout.html', {
+        'cart': cart,
+        'items': items
+    })
 

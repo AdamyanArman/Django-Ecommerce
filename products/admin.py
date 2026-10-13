@@ -81,8 +81,9 @@ class ProductTranslationInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     inlines = [ProductTranslationInline]
-    list_display = ['id', 'article', 'image', 'show_categories']
+    list_display = ['article', 'image', 'show_categories']
     readonly_fields = ['updated_at', 'created_at']
+    search_fields = ('name',)
 
     def show_categories(self, obj):
         return ", ".join([c.name_hy for c in obj.categories.all()])
